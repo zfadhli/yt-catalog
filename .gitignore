@@ -1,0 +1,9 @@
+node_modules/
+dist/
+# Local secrets — never commit
+.env
+
+# generated build artifacts are committed on purpose (no build step to run the CLI)
+
+# Local agent config
+.pi/
