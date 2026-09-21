@@ -7,3 +7,7 @@ dist/
 
 # Local agent config
 .pi/
+
+# Generated catalogs
+videos*.html
+videos*.json

@@ -12,6 +12,8 @@ import { renderHtml } from "./html.js";
 
 const DEFAULT_CONCURRENCY = 5;
 const DEFAULT_TIMEOUT_S = 15;
+/** Mirrors the clamp in api.ts, so the CLI never accepts a value it ignores. */
+const MAX_CONCURRENCY = 20;
 
 const main = defineCommand({
   meta: {
@@ -51,7 +53,7 @@ const main = defineCommand({
       alias: "c",
       default: String(DEFAULT_CONCURRENCY),
       description:
-        "Max concurrent YouTube API requests, each covering up to 50 videos (default 5)",
+        `Max concurrent YouTube API requests, each covering up to 50 videos (default ${DEFAULT_CONCURRENCY}, max ${MAX_CONCURRENCY})`,
     },
     recursive: {
       type: "boolean",
@@ -232,7 +234,7 @@ function parseConcurrency(raw: string): number {
     );
     return DEFAULT_CONCURRENCY;
   }
-  return Math.min(n, 50);
+  return Math.min(n, MAX_CONCURRENCY);
 }
 
 function parseTimeout(raw: string): number {
