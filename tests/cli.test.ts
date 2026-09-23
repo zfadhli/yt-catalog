@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { timestamp, withTimestamp } from "../src/cli.ts";
+import { legacyHint, timestamp, withTimestamp } from "../src/cli.ts";
 
 const STAMP = "20260921_163400";
 
@@ -49,6 +49,28 @@ describe("withTimestamp", () => {
     expect(withTimestamp("videos.html", null)).toBe("videos.html");
     expect(withTimestamp("out/{timestamp}/videos.html", null)).toBe(
       "out/{timestamp}/videos.html",
+    );
+  });
+});
+
+describe("legacyHint", () => {
+  test("points the pre-subcommand `yt-catalog <folder>` form at scan", () => {
+    expect(legacyHint(["./downloads"])).toContain("yt-catalog scan <folder>");
+  });
+
+  test("stays quiet for known commands", () => {
+    expect(legacyHint(["scan", "./downloads"])).toBeNull();
+    expect(legacyHint(["merge"])).toBeNull();
+  });
+
+  test("stays quiet when there is no positional at all", () => {
+    expect(legacyHint([])).toBeNull();
+    expect(legacyHint(["--help"])).toBeNull();
+  });
+
+  test("ignores flags when looking for the command name", () => {
+    expect(legacyHint(["-o", "x.html", "./downloads"])).toContain(
+      "yt-catalog scan <folder>",
     );
   });
 });

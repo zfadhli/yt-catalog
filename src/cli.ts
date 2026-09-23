@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 import { readFileSync } from "node:fs";
-import { stat } from "node:fs/promises";
+import { readdir, stat } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -9,15 +9,82 @@ import { scanFolder } from "./scanner.js";
 import { parseFilename } from "./parser.js";
 import { resolveVideos } from "./api.js";
 import { renderHtml } from "./html.js";
+import { mergeVideos, parseCatalog } from "./merge.js";
+import type { VideoEntry } from "./types.js";
 
 const DEFAULT_CONCURRENCY = 5;
 const DEFAULT_TIMEOUT_S = 15;
 /** Mirrors the clamp in api.ts, so the CLI never accepts a value it ignores. */
 const MAX_CONCURRENCY = 20;
 
-const main = defineCommand({
+const mergeCommand = defineCommand({
   meta: {
-    name: "yt-catalog",
+    name: "merge",
+    description:
+      "Merge every videos*.json in a folder into one HTML + JSON catalog, deduplicated",
+  },
+  args: {
+    folder: {
+      type: "positional",
+      description: "Folder containing videos*.json catalogs",
+      default: ".",
+    },
+    html: {
+      type: "string",
+      alias: "o",
+      default: "videos.html",
+      description: "Output path for the merged HTML catalog",
+    },
+    json: {
+      type: "string",
+      alias: "j",
+      default: "videos.json",
+      description: "Output path for the merged JSON catalog",
+    },
+  },
+  async run({ args }) {
+    const folder = resolve((args.folder as string | undefined) ?? ".");
+    const inputs = await listCatalogs(folder);
+    if (inputs.length === 0) {
+      console.error(`error: no videos*.json files in ${folder}`);
+      process.exit(1);
+    }
+
+    const catalogs: VideoEntry[][] = [];
+    for (const name of inputs) {
+      const path = join(folder, name);
+      try {
+        catalogs.push(parseCatalog(await Bun.file(path).text(), name));
+      } catch (err) {
+        console.error(`error: ${(err as Error).message}`);
+        process.exit(1);
+      }
+    }
+
+    const total = catalogs.reduce((n, c) => n + c.length, 0);
+    const videos = mergeVideos(catalogs).sort((a, b) =>
+      a.channel.localeCompare(b.channel) || a.title.localeCompare(b.title),
+    );
+
+    const htmlPath = resolve(args.html as string);
+    const jsonPath = resolve(args.json as string);
+    if (htmlPath === jsonPath) {
+      console.error("error: --html and --json must differ");
+      process.exit(1);
+    }
+    await Bun.write(htmlPath, renderHtml(videos));
+    await Bun.write(jsonPath, JSON.stringify(videos, null, 2) + "\n");
+
+    console.log(
+      `done: ${videos.length} videos from ${inputs.length} file(s) ` +
+        `(${total - videos.length} duplicates removed) → ${htmlPath} + ${jsonPath}`,
+    );
+  },
+});
+
+const scanCommand = defineCommand({
+  meta: {
+    name: "scan",
     version: "0.1.0",
     description:
       "Scan a folder of downloaded YouTube videos and generate a searchable HTML + JSON catalog.",
@@ -25,7 +92,8 @@ const main = defineCommand({
   args: {
     folder: {
       type: "positional",
-      description: "Folder containing videos named `<channel> [<id>] <title>.mp4`",
+      description:
+        "Folder containing videos named `<channel> [<id>] <title>.mp4`",
       required: true,
     },
     html: {
@@ -173,6 +241,20 @@ const main = defineCommand({
   },
 });
 
+/**
+ * Catalogs to merge, in the order they are read. Excludes the default output
+ * name so `merge` in a directory it has already written to does not fold its
+ * own result back in; anything else named `videos*.json` is fair game.
+ */
+async function listCatalogs(folder: string): Promise<string[]> {
+  const entries = await readdir(folder, { withFileTypes: true });
+  return entries
+    .filter((e) => e.isFile() && /^videos.*\.json$/.test(e.name))
+    .map((e) => e.name)
+    .filter((name) => name !== "videos.json")
+    .sort();
+}
+
 /** Local-time `YYYYMMDD_HHMMSS`, matching `videos_20260921_163400.html`. */
 export function timestamp(now = new Date()): string {
   const p = (n: number) => String(n).padStart(2, "0");
@@ -248,5 +330,35 @@ function parseTimeout(raw: string): number {
   return Math.min(n, 300) * 1000;
 }
 
+const main = defineCommand({
+  meta: {
+    name: "yt-catalog",
+    version: "0.1.0",
+    description:
+      "Catalog downloaded YouTube videos: `scan` builds one from a folder, `merge` combines existing catalogs.",
+  },
+  args: {},
+  subCommands: { scan: scanCommand, merge: mergeCommand },
+});
+
+/**
+ * `yt-catalog <folder>` was the original single-command form. citty now treats
+ * the first positional as a command name, so point stragglers at `scan` rather
+ * than letting citty report a confusing "Unknown command `./downloads`".
+ */
+export function legacyHint(argv: string[]): string | null {
+  const first = argv.find((a) => !a.startsWith("-"));
+  if (!first || first === "scan" || first === "merge") return null;
+  return `error: unknown command \`${first}\`\n` +
+    `hint: scanning a folder is now \`yt-catalog scan <folder>\``;
+}
+
 // Guarded so `bun test` can import the helpers above without running the CLI.
-if (import.meta.main) runMain(main);
+if (import.meta.main) {
+  const hint = legacyHint(process.argv.slice(2));
+  if (hint) {
+    console.error(hint);
+    process.exit(1);
+  }
+  runMain(main);
+}

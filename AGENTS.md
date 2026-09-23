@@ -11,20 +11,22 @@ browsable record of what they were.
 Pipeline, in order:
 
 ```
-src/         6 TypeScript files
-  cli.ts     scan → parse filenames → resolve via API → write HTML + JSON
+src/         7 TypeScript files
+  cli.ts     `scan` command: scan → parse filenames → resolve via API → write HTML + JSON
+             `merge` command: videos*.json → deduped HTML + JSON, no API
   scanner.ts flat or recursive file listing
   parser.ts  filename → { channel, id, title }
   api.ts     batched videos.list calls, bounded concurrency, skip classification
   html.ts    renders the single-file page (Tailwind + Alpine, both inlined)
+  merge.ts   catalog JSON → deduped VideoEntry[]; validates input shape
   types.ts   shared types + API URL helpers
   theme.css  Tailwind v4 source → theme.generated.css
-tests/       5 bun:test files, mirroring src/ module names
+tests/       6 bun:test files, mirroring src/ module names
 scripts/     dom-check.mjs (jsdom DOM assertions; run under node)
 vendor/      alpine.min.js (committed, inlined at render time)
 ```
 
-Roughly 1 300 lines of TypeScript across 6 source files and 5 test files, plus
+Roughly 1 400 lines of TypeScript across 7 source files and 6 test files, plus
 a 150-line DOM test script and the Tailwind source. One runtime dependency
 (`citty`). No frameworks, no database, no server.
 
@@ -37,8 +39,9 @@ touches the originals.
 ```sh
 bun install        # install dependencies
 bun run build:css  # rebuild Tailwind → src/theme.generated.css
-bun src/cli.ts <folder>                      # run
-bun src/cli.ts <folder> --help               # list all flags
+bun src/cli.ts scan <folder>                 # run
+bun src/cli.ts scan <folder> --help          # list all scan flags
+bun src/cli.ts merge <folder>                # combine existing videos*.json
 ```
 
 A YouTube Data API v3 key is required to run the CLI. Resolution order (first
@@ -59,7 +62,7 @@ on a key being present.
 ## Testing instructions
 
 ```sh
-bun test           # 36 unit tests (bun:test), all of tests/
+bun test           # 44 unit tests (bun:test), all of tests/
 bun run test:dom   # 21 DOM assertions against a generated page
 bunx tsc --noEmit  # typecheck
 ```
@@ -67,7 +70,7 @@ bunx tsc --noEmit  # typecheck
 **Important: `bun test` does not run the DOM suite.** They are separate on
 purpose:
 
-- `bun test` runs the five `tests/*.test.ts` files.
+- `bun test` runs the six `tests/*.test.ts` files.
 - `bun run test:dom` runs `scripts/dom-check.mjs` under **`node`, not `bun`**.
   jsdom 30 rejects Bun's window proxy with
   `'addEventListener' called on an object that is not a valid instance of EventTarget`.
@@ -173,6 +176,14 @@ Alpine-specific traps that have already caused bugs here:
 - Output paths are timestamped in **local time** as `YYYYMMDD_HHMMSS`, inserted
   before the extension. A literal `{timestamp}` token anywhere in `-o`/`-j`
   overrides the placement; `--no-timestamp` disables stamping.
+- Two subcommands, `scan` and `merge`, registered on `main` via citty
+  `subCommands`. citty treats the first positional as a command name, so the
+  old bare `yt-catalog <folder>` form is gone; `legacyHint()` in the entry
+  point catches it and points at `scan` instead of letting citty print
+  "Unknown command `./downloads`".
+- `merge` never deletes or rewrites its inputs, and skips its own default
+  output name `videos.json` when listing inputs (`videos_*.json` and any other
+  `videos*.json` are read).
 - `parseFilename` accepts a full path or a bare filename and takes the basename
   (handles both `/` and `\`). It is strict about the ID being exactly 11
   characters of `[A-Za-z0-9_-]` and returns `null` for anything else rather than
@@ -213,8 +224,8 @@ Alpine-specific traps that have already caused bugs here:
 ## Common tasks
 
 Add a CLI flag:
-1. Add it to the `args` object in `src/cli.ts` (with `default` and
-   `description`).
+1. Add it to the `args` object in the `scanCommand` (or `mergeCommand`) in
+   `src/cli.ts` (with `default` and `description`).
 2. Wire it in `run()`, extracting any pure logic into an exported helper.
 3. Unit-test the helper in `tests/cli.test.ts`.
 4. Document it in `README.md` (options table) and here if relevant.

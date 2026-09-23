@@ -116,14 +116,14 @@ cp .env.example ~/.yt-catalog.env && chmod 600 ~/.yt-catalog.env
 ### 4. Run it
 
 ```sh
-bun src/cli.ts ~/Videos/downloads
+bun src/cli.ts scan ~/Videos/downloads
 ```
 
 ### Optional: install globally
 
 ```sh
 bun link                # registers `yt-catalog` in ~/.bun/bin
-yt-catalog ~/Videos/downloads
+yt-catalog scan ~/Videos/downloads
 bun unlink yt-catalog   # remove
 ```
 
@@ -141,21 +141,32 @@ export PATH="$HOME/.bun/bin:$PATH"
 
 ## Usage
 
+`yt-catalog` has two commands: `scan` (folder of `.mp4` files → catalog) and
+`merge` (catalogs → one catalog).
+
+> **Breaking change:** the pre-0.2 form `yt-catalog <folder>` now errors with a
+> hint instead of scanning. Use `yt-catalog scan <folder>`.
+
 ```sh
 # Scan ./downloads → videos_<timestamp>.html + videos_<timestamp>.json
-yt-catalog ./downloads
+yt-catalog scan ./downloads
 
 # Recurse into subfolders, raise concurrency, choose output names
-yt-catalog ./downloads -r -c 10 -o catalog.html -j catalog.json
+yt-catalog scan ./downloads -r -c 10 -o catalog.html -j catalog.json
 
 # Fixed filenames (overwrite on each run)
-yt-catalog ./downloads --no-timestamp
+yt-catalog scan ./downloads --no-timestamp
 
 # Place the timestamp in a directory instead
-yt-catalog ./downloads -o 'out/{timestamp}/videos.html'
+yt-catalog scan ./downloads -o 'out/{timestamp}/videos.html'
+
+# No API key needed: merge existing catalogs into one deduplicated pair
+# Reads every videos*.json in ./backups (except videos.json itself)
+# and sorts by channel, then title
+yt-catalog merge ./backups
 ```
 
-### Options
+### `yt-catalog scan <folder>`
 
 | Option | Default | Description |
 | ------ | ------- | ----------- |
@@ -168,12 +179,33 @@ yt-catalog ./downloads -o 'out/{timestamp}/videos.html'
 | `-r, --recursive` | off | Scan subdirectories too |
 | `--timeout <seconds>` | `15` | Per-request API timeout |
 
+### `yt-catalog merge [folder]`
+
+Rebuilds `videos.html` + `videos.json` from catalogs you already have — no API
+key, no network. Use it after several `--no-timestamp`-less runs scattered
+catalogs across a backup folder, or after merging two collections.
+
+```sh
+yt-catalog merge                       # ./ → videos.html + videos.json
+yt-catalog merge ./backups -o all.html -j all.json
+```
+
+- Reads every `videos*.json` in the folder (non-recursive), **excluding** the
+  default output name `videos.json` so a re-run does not fold its own result
+  back in.
+- Duplicate video ids are dropped; the first file read wins (`videos_1.json`
+  before `videos_2.json` — files are sorted, so a direct copy keeps its ids).- Output is sorted by channel, then title.
+- A malformed JSON file or an entry without a string `id` aborts with a
+  message naming the file — it does not silently produce a partial catalog.
+- Exit codes as above; `1` also covers "no `videos*.json` found" and
+  `--html` == `--json`.
+
 ### Exit codes
 
 | Code | Meaning |
 | ---- | ------- |
 | `0` | Catalog written. Some files may have been skipped — check stderr |
-| `1` | Folder missing/unreadable, or no API key found |
+| `1` | Folder missing/unreadable, or no API key found (scan), or no/malformed input catalogs (merge) |
 
 ### Output naming
 
