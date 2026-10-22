@@ -1,4 +1,3 @@
-import { stat } from "node:fs/promises";
 import { resolve } from "node:path";
 import { defineCommand } from "citty";
 import { scanFolder } from "../scanner.js";
@@ -7,6 +6,7 @@ import { resolveVideos } from "../api.js";
 import { writeCatalog } from "../catalog.js";
 import { timestamp, withTimestamp } from "../paths.js";
 import { GLOBAL_ENV_PATH, resolveApiKey } from "../config.js";
+import { assertFolder } from "./folder.js";
 
 const DEFAULT_CONCURRENCY = 5;
 const DEFAULT_TIMEOUT_S = 15;
@@ -72,16 +72,7 @@ export const scanCommand = defineCommand({
   },
   async run({ args }) {
     const folder = resolve(args.folder as string);
-    try {
-      const st = await stat(folder);
-      if (!st.isDirectory()) {
-        console.error(`error: not a directory: ${folder}`);
-        process.exit(1);
-      }
-    } catch {
-      console.error(`error: folder not found: ${folder}`);
-      process.exit(1);
-    }
+    await assertFolder(folder);
 
     const concurrency = parseConcurrency(args.concurrency as string);
     const timeoutMs = parseTimeout(args.timeout as string);

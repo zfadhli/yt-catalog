@@ -3,6 +3,7 @@ import { join, resolve } from "node:path";
 import { defineCommand } from "citty";
 import { mergeVideos, parseCatalog, writeCatalog } from "../catalog.js";
 import type { VideoEntry } from "../types.js";
+import { assertFolder } from "./folder.js";
 
 export const mergeCommand = defineCommand({
   meta: {
@@ -31,6 +32,7 @@ export const mergeCommand = defineCommand({
   },
   async run({ args }) {
     const folder = resolve((args.folder as string | undefined) ?? ".");
+    await assertFolder(folder);
     const inputs = await listCatalogs(folder);
     if (inputs.length === 0) {
       console.error(`error: no videos*.json files in ${folder}`);

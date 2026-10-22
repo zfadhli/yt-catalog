@@ -102,6 +102,13 @@ describe("merge end to end", () => {
       expect(stderr).toContain("no videos*.json files");
     });
   });
+
+  test("missing folder exits 1 with a message, not a stack trace", async () => {
+    const { stderr, code } = await run(["merge", "/tmp/definitely-not-here"]);
+    expect(code).toBe(1);
+    expect(stderr).toContain("folder not found: /tmp/definitely-not-here");
+    expect(stderr).not.toContain("ENOENT");
+  });
 });
 
 describe("scan argument validation", () => {
