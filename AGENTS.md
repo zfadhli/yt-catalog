@@ -181,9 +181,12 @@ Alpine-specific traps that have already caused bugs here:
   old bare `yt-catalog <folder>` form is gone; `legacyHint()` in the entry
   point catches it and points at `scan` instead of letting citty print
   "Unknown command `./downloads`".
-- `merge` never deletes or rewrites its inputs, and skips its own default
-  output name `videos.json` when listing inputs (`videos_*.json` and any other
-  `videos*.json` are read).
+- `merge` never deletes or rewrites its inputs. It reads **every**
+  `videos*.json`, including its own default output `videos.json`: that file is
+  the accumulated catalog, and dedup by video id makes re-reading it
+  idempotent. Excluding it was a bug that silently dropped videos which only
+  existed there. All inputs are read before anything is written, so output ==
+  input is safe.
 - `parseFilename` accepts a full path or a bare filename and takes the basename
   (handles both `/` and `\`). It is strict about the ID being exactly 11
   characters of `[A-Za-z0-9_-]` and returns `null` for anything else rather than

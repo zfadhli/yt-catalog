@@ -242,16 +242,19 @@ const scanCommand = defineCommand({
 });
 
 /**
- * Catalogs to merge, in the order they are read. Excludes the default output
- * name so `merge` in a directory it has already written to does not fold its
- * own result back in; anything else named `videos*.json` is fair game.
+ * Catalogs to merge, in the order they are read.
+ *
+ * `videos.json` is included: it is the accumulated catalog, and dedup by video
+ * id makes re-reading our own previous output idempotent. Excluding it (as an
+ * earlier version did) silently discarded every video that only existed there,
+ * so `merge` after a fresh scan destroyed the archive it was meant to extend.
+ * Safe because every input is read fully before anything is written.
  */
-async function listCatalogs(folder: string): Promise<string[]> {
+export async function listCatalogs(folder: string): Promise<string[]> {
   const entries = await readdir(folder, { withFileTypes: true });
   return entries
     .filter((e) => e.isFile() && /^videos.*\.json$/.test(e.name))
     .map((e) => e.name)
-    .filter((name) => name !== "videos.json")
     .sort();
 }
 

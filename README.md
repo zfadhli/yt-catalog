@@ -190,11 +190,14 @@ yt-catalog merge                       # ./ → videos.html + videos.json
 yt-catalog merge ./backups -o all.html -j all.json
 ```
 
-- Reads every `videos*.json` in the folder (non-recursive), **excluding** the
-  default output name `videos.json` so a re-run does not fold its own result
-  back in.
-- Duplicate video ids are dropped; the first file read wins (`videos_1.json`
-  before `videos_2.json` — files are sorted, so a direct copy keeps its ids).- Output is sorted by channel, then title.
+- Reads every `videos*.json` in the folder (non-recursive), **including**
+  `videos.json`. That file is the accumulated catalog, so merging it with a
+  fresh `videos_<timestamp>.json` extends the archive instead of replacing it.
+  Dedup makes re-reading the previous output idempotent; every input is read
+  before anything is written.
+- Duplicate video ids are dropped; the first file read wins (`videos.json`, then
+  `videos_<timestamp>.json` in name order).
+- Output is sorted by channel, then title.
 - A malformed JSON file or an entry without a string `id` aborts with a
   message naming the file — it does not silently produce a partial catalog.
 - Exit codes as above; `1` also covers "no `videos*.json` found" and

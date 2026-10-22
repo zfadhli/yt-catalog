@@ -1,5 +1,8 @@
 import { describe, expect, test } from "bun:test";
-import { legacyHint, timestamp, withTimestamp } from "../src/cli.ts";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { legacyHint, listCatalogs, timestamp, withTimestamp } from "../src/cli.ts";
 
 const STAMP = "20260921_163400";
 
@@ -72,5 +75,29 @@ describe("legacyHint", () => {
     expect(legacyHint(["-o", "x.html", "./downloads"])).toContain(
       "yt-catalog scan <folder>",
     );
+  });
+});
+
+describe("listCatalogs", () => {
+  test("includes videos.json so an accumulated catalog is not discarded", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "yt-catalog-merge-"));
+    try {
+      for (const name of [
+        "videos.json",
+        "videos_1.json",
+        "videos_2.json",
+        "notes.json",
+        "videos.html",
+      ]) {
+        await writeFile(join(dir, name), "[]");
+      }
+      expect(await listCatalogs(dir)).toEqual([
+        "videos.json",
+        "videos_1.json",
+        "videos_2.json",
+      ]);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
   });
 });
