@@ -103,6 +103,9 @@ Testing conventions:
 ## Code style
 
 - TypeScript, strict mode, ESM. `bun check` must pass with no errors.
+- `typescript` is v7 (the native Go compiler). `bun check` is the gate;
+  `bunx tsc --noEmit` should agree. If the two ever disagree, trust neither
+  until you know which one is stale.
 - `bun fmt` (Bun's built-in formatter, Prettier-compatible) owns formatting:
   2-space indent, double quotes, semicolons, trailing commas, 80 columns.
   `bun fmt --check` is the gate. No linter is configured.
