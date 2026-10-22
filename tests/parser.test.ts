@@ -29,9 +29,9 @@ describe("parseFilename", () => {
     expect(parseFilename("/dl/Chan [dQw4w9WgXcQ] Title.mp4")?.id).toBe(
       "dQw4w9WgXcQ",
     );
-    expect(
-      parseFilename("C:\\dl\\Chan [dQw4w9WgXcQ] Title.mp4")?.channel,
-    ).toBe("Chan");
+    expect(parseFilename("C:\\dl\\Chan [dQw4w9WgXcQ] Title.mp4")?.channel).toBe(
+      "Chan",
+    );
   });
 
   test("rejects non-matching filenames", () => {

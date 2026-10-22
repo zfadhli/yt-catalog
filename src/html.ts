@@ -4,12 +4,12 @@ import type { VideoEntry } from "./types.js";
 
 /** Escape text for safe interpolation into HTML content or attributes. */
 export function escapeHtml(text: string): string {
-	return text
-		.replace(/&/g, "&amp;")
-		.replace(/</g, "&lt;")
-		.replace(/>/g, "&gt;")
-		.replace(/"/g, "&quot;")
-		.replace(/'/g, "&#39;");
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 
 /**
@@ -18,7 +18,7 @@ export function escapeHtml(text: string): string {
  * containing `</script>` can never break out of the tag.
  */
 export function serializeForHtml(videos: VideoEntry[]): string {
-	return JSON.stringify(videos).replace(/</g, "\\u003c");
+  return JSON.stringify(videos).replace(/</g, "\\u003c");
 }
 
 /**
@@ -27,16 +27,16 @@ export function serializeForHtml(videos: VideoEntry[]): string {
  * `bun run build:css` regenerates the CSS; `vendor/alpine.min.js` is committed.
  */
 export function assets(): { css: string; js: string } {
-	return {
-		css: readFileSync(
-			fileURLToPath(new URL("./theme.generated.css", import.meta.url)),
-			"utf8",
-		),
-		js: readFileSync(
-			fileURLToPath(new URL("../vendor/alpine.min.js", import.meta.url)),
-			"utf8",
-		),
-	};
+  return {
+    css: readFileSync(
+      fileURLToPath(new URL("./theme.generated.css", import.meta.url)),
+      "utf8",
+    ),
+    js: readFileSync(
+      fileURLToPath(new URL("../vendor/alpine.min.js", import.meta.url)),
+      "utf8",
+    ),
+  };
 }
 
 /**
@@ -133,9 +133,9 @@ const CARD = `<template x-for="v in visible" :key="v.id + v.originalFilename">
 </template>`;
 
 export function renderHtml(videos: VideoEntry[]): string {
-	const payload = serializeForHtml(videos);
-	const { css, js } = assets();
-	return `<!DOCTYPE html>
+  const payload = serializeForHtml(videos);
+  const { css, js } = assets();
+  return `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />

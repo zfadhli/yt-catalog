@@ -10,7 +10,9 @@ afterEach(async () => {
   dirs = [];
 });
 
-async function makeTree(structure: Record<string, string | null>): Promise<string> {
+async function makeTree(
+  structure: Record<string, string | null>,
+): Promise<string> {
   const dir = await mkdtemp(join(tmpdir(), "yt-catalog-"));
   dirs.push(dir);
   for (const [name, content] of Object.entries(structure)) {

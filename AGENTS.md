@@ -62,9 +62,10 @@ on a key being present.
 ## Testing instructions
 
 ```sh
-bun test           # 44 unit tests (bun:test), all of tests/
+bun test           # 49 unit tests (bun:test), all of tests/
 bun run test:dom   # 21 DOM assertions against a generated page
-bunx tsc --noEmit  # typecheck
+bun check          # typecheck (TypeScript, multithreaded; same errors as tsc)
+bun fmt --check    # formatting; `bun fmt` writes
 ```
 
 **Important: `bun test` does not run the DOM suite.** They are separate on
@@ -101,16 +102,22 @@ Testing conventions:
 
 ## Code style
 
-- TypeScript, strict mode, ESM. `bunx tsc --noEmit` must pass with no errors.
-- No formatter or linter is configured; match surrounding style. The codebase
-  uses 2-space indent, double quotes, semicolons, and trailing commas.
+- TypeScript, strict mode, ESM. `bun check` must pass with no errors.
+- `bun fmt` (Bun's built-in formatter, Prettier-compatible) owns formatting:
+  2-space indent, double quotes, semicolons, trailing commas, 80 columns.
+  `bun fmt --check` is the gate. No linter is configured.
+- Do **not** name a package script `fmt`: `bun fmt` runs a `fmt` script when one
+  exists, so the script would call itself. The npm scripts are `format` and
+  `format:check`.
+- `src/theme.generated.css` and `vendor/` are in `.prettierignore`; they are
+  generated or vendored, so formatting them only adds churn.
 - Prefer built-in Bun/Node APIs (`Bun.write`, `Bun.file`, `node:fs/promises`,
   native `fetch`) over adding dependencies. Adding a runtime dependency needs a
   strong justification — there is currently exactly one.
 - Export pure functions and keep side effects in `cli.ts`. `parser.ts`,
   `scanner.ts`, and the helpers in `api.ts`/`html.ts` are all unit-testable
   without I/O or network.
-- Comment the *why* for non-obvious decisions, not the *what*. Several existing
+- Comment the _why_ for non-obvious decisions, not the _what_. Several existing
   comments document bugs that were hit (see the `.dark` note below in
   HTML/theme) — keep that convention when you fix something subtle.
 
@@ -195,11 +202,11 @@ Alpine-specific traps that have already caused bugs here:
 ## Pull request guidelines
 
 - Commit messages follow Conventional Commits (`feat:`, `fix:`, `docs:`,
-  `test:`, `chore:`), with a body explaining the *why* when the change is
+  `test:`, `chore:`), with a body explaining the _why_ when the change is
   non-obvious.
 - Before committing, run all three:
   ```sh
-  bun test && bun run test:dom && bunx tsc --noEmit
+  bun test && bun run test:dom && bun check && bun fmt --check
   ```
   There is no CI workflow configured, so these will not be run for you.
 - If you changed markup or classes in `html.ts` or anything in `theme.css`, also
@@ -227,6 +234,7 @@ Alpine-specific traps that have already caused bugs here:
 ## Common tasks
 
 Add a CLI flag:
+
 1. Add it to the `args` object in the `scanCommand` (or `mergeCommand`) in
    `src/cli.ts` (with `default` and `description`).
 2. Wire it in `run()`, extracting any pure logic into an exported helper.
@@ -234,13 +242,15 @@ Add a CLI flag:
 4. Document it in `README.md` (options table) and here if relevant.
 
 Change the page layout:
+
 1. Edit the markup or Alpine component in `src/html.ts`.
 2. `bun run build:css`.
-3. `bun test && bun run test:dom && bunx tsc --noEmit`.
+3. `bun test && bun run test:dom && bun check && bun fmt --check`.
 4. Update `tests/html.test.ts` if you added or removed a UI control, and
    `scripts/dom-check.mjs` if the behaviour changed.
 
 Debug a catalog that is missing videos:
+
 1. Re-run and read stderr — every skip prints a filename and a reason.
 2. A `filename did not match pattern` skip means `parseFilename` rejected it;
    check the bracket format and the 11-character ID.

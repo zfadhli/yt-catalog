@@ -11,7 +11,9 @@
     "build:css": "tailwindcss -i src/theme.css -o src/theme.generated.css -m",
     "test": "bun test",
     "test:dom": "node scripts/dom-check.mjs",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "bun check",
+    "format": "bun fmt",
+    "format:check": "bun fmt --check"
   },
   "dependencies": {
     "citty": "^0.1.6"

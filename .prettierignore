@@ -1,0 +1,5 @@
+# Generated at build time by `bun run build:css`; formatting it only adds churn.
+src/theme.generated.css
+
+# Vendored third-party bundle, inlined verbatim.
+vendor/

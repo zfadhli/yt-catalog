@@ -62,8 +62,9 @@ const mergeCommand = defineCommand({
     }
 
     const total = catalogs.reduce((n, c) => n + c.length, 0);
-    const videos = mergeVideos(catalogs).sort((a, b) =>
-      a.channel.localeCompare(b.channel) || a.title.localeCompare(b.title),
+    const videos = mergeVideos(catalogs).sort(
+      (a, b) =>
+        a.channel.localeCompare(b.channel) || a.title.localeCompare(b.title),
     );
 
     const htmlPath = resolve(args.html as string);
@@ -120,8 +121,7 @@ const scanCommand = defineCommand({
       type: "string",
       alias: "c",
       default: String(DEFAULT_CONCURRENCY),
-      description:
-        `Max concurrent YouTube API requests, each covering up to 50 videos (default ${DEFAULT_CONCURRENCY}, max ${MAX_CONCURRENCY})`,
+      description: `Max concurrent YouTube API requests, each covering up to 50 videos (default ${DEFAULT_CONCURRENCY}, max ${MAX_CONCURRENCY})`,
     },
     recursive: {
       type: "boolean",
@@ -226,7 +226,9 @@ const scanCommand = defineCommand({
       `done: ${videos.length} videos → ${htmlPath} + ${jsonPath} (${elapsed}s)`,
     );
     const skippedLines = [
-      ...unparseable.map((f) => `  SKIP (filename did not match pattern): ${f}`),
+      ...unparseable.map(
+        (f) => `  SKIP (filename did not match pattern): ${f}`,
+      ),
       ...skipped.map((s) => `  SKIP (${s.reason}): ${s.file.originalFilename}`),
     ];
     if (skippedLines.length > 0) {
@@ -275,7 +277,8 @@ export function timestamp(now = new Date()): string {
  */
 export function withTimestamp(path: string, stamp: string | null): string {
   if (!stamp) return path;
-  if (path.includes("{timestamp}")) return path.replaceAll("{timestamp}", stamp);
+  if (path.includes("{timestamp}"))
+    return path.replaceAll("{timestamp}", stamp);
   const slash = path.lastIndexOf("/");
   const dot = path.lastIndexOf(".");
   if (dot <= slash) return `${path}_${stamp}`;
@@ -352,8 +355,10 @@ const main = defineCommand({
 export function legacyHint(argv: string[]): string | null {
   const first = argv.find((a) => !a.startsWith("-"));
   if (!first || first === "scan" || first === "merge") return null;
-  return `error: unknown command \`${first}\`\n` +
-    `hint: scanning a folder is now \`yt-catalog scan <folder>\``;
+  return (
+    `error: unknown command \`${first}\`\n` +
+    `hint: scanning a folder is now \`yt-catalog scan <folder>\``
+  );
 }
 
 // Guarded so `bun test` can import the helpers above without running the CLI.

@@ -56,7 +56,7 @@ skipped 17 of 1301 file(s):
 - **Light and dark mode** — toggled manually and remembered in `localStorage`.
 - **Quota-friendly API use** — batched `videos.list`, 50 videos per request and
   **1 quota unit per request**. 1 000 videos costs 20 units.
-- **Honest failures** — anything the API will not return is left out of *both*
+- **Honest failures** — anything the API will not return is left out of _both_
   outputs rather than rendered as a broken card, and every skip is printed to
   stderr.
 - **Timestamped outputs** — repeated runs never clobber a previous catalog.
@@ -71,8 +71,8 @@ skipped 17 of 1301 file(s):
 ### 1. Get an API key
 
 1. Create or select a project in the [Google Cloud Console](https://console.cloud.google.com/)
-2. Enable **YouTube Data API v3** under *APIs & Services → Library*
-3. Create an **API key** under *APIs & Services → Credentials*
+2. Enable **YouTube Data API v3** under _APIs & Services → Library_
+3. Create an **API key** under _APIs & Services → Credentials_
 
 > [!NOTE]
 > `videos.list` reads cost **1 unit** per call and cover up to 50 videos, so the
@@ -91,14 +91,14 @@ bun install
 
 The CLI looks for a key in this order — first hit wins:
 
-| # | Source | Notes |
-| - | ------ | ----- |
-| 1 | `--api-key <key>` | explicit, always wins |
-| 2 | `$YOUTUBE_API_KEY` | environment variable |
-| 3 | `./.env` | in the **current working directory** |
-| 4 | `$YOUTUBE_API_KEY_ENV` | path to a key file you choose |
-| 5 | `~/.yt-catalog.env` | works from any directory |
-| 6 | `<repo>/.env` | the checkout, when installed with `bun link` |
+| #   | Source                 | Notes                                        |
+| --- | ---------------------- | -------------------------------------------- |
+| 1   | `--api-key <key>`      | explicit, always wins                        |
+| 2   | `$YOUTUBE_API_KEY`     | environment variable                         |
+| 3   | `./.env`               | in the **current working directory**         |
+| 4   | `$YOUTUBE_API_KEY_ENV` | path to a key file you choose                |
+| 5   | `~/.yt-catalog.env`    | works from any directory                     |
+| 6   | `<repo>/.env`          | the checkout, when installed with `bun link` |
 
 The simplest permanent setup:
 
@@ -168,16 +168,16 @@ yt-catalog merge ./backups
 
 ### `yt-catalog scan <folder>`
 
-| Option | Default | Description |
-| ------ | ------- | ----------- |
-| `<folder>` | *required* | Folder containing `Channel [videoId] Title.mp4` files |
-| `--api-key <key>` | `$YOUTUBE_API_KEY` | YouTube Data API v3 key |
-| `-o, --html <path>` | `videos.html` | HTML output path; `{timestamp}` is expanded |
-| `-j, --json <path>` | `videos.json` | JSON output path; `{timestamp}` is expanded |
-| `--no-timestamp` | timestamp on | Write fixed names instead of timestamped ones |
-| `-c, --concurrency <n>` | `5` | Parallel API requests (1–50); each covers up to 50 videos |
-| `-r, --recursive` | off | Scan subdirectories too |
-| `--timeout <seconds>` | `15` | Per-request API timeout |
+| Option                  | Default            | Description                                               |
+| ----------------------- | ------------------ | --------------------------------------------------------- |
+| `<folder>`              | _required_         | Folder containing `Channel [videoId] Title.mp4` files     |
+| `--api-key <key>`       | `$YOUTUBE_API_KEY` | YouTube Data API v3 key                                   |
+| `-o, --html <path>`     | `videos.html`      | HTML output path; `{timestamp}` is expanded               |
+| `-j, --json <path>`     | `videos.json`      | JSON output path; `{timestamp}` is expanded               |
+| `--no-timestamp`        | timestamp on       | Write fixed names instead of timestamped ones             |
+| `-c, --concurrency <n>` | `5`                | Parallel API requests (1–50); each covers up to 50 videos |
+| `-r, --recursive`       | off                | Scan subdirectories too                                   |
+| `--timeout <seconds>`   | `15`               | Per-request API timeout                                   |
 
 ### `yt-catalog merge [folder]`
 
@@ -205,10 +205,10 @@ yt-catalog merge ./backups -o all.html -j all.json
 
 ### Exit codes
 
-| Code | Meaning |
-| ---- | ------- |
-| `0` | Catalog written. Some files may have been skipped — check stderr |
-| `1` | Folder missing/unreadable, or no API key found (scan), or no/malformed input catalogs (merge) |
+| Code | Meaning                                                                                       |
+| ---- | --------------------------------------------------------------------------------------------- |
+| `0`  | Catalog written. Some files may have been skipped — check stderr                              |
+| `1`  | Folder missing/unreadable, or no API key found (scan), or no/malformed input catalogs (merge) |
 
 ### Output naming
 
@@ -233,8 +233,8 @@ there is no server and no network access beyond loading thumbnails from YouTube.
 
 | Videos | File size |
 | ------ | --------- |
-| 100 | ~82 KB |
-| 2 000 | ~444 KB |
+| 100    | ~82 KB    |
+| 2 000  | ~444 KB   |
 
 For reference, filtering and sorting a 2 000-video catalog takes about 2 ms in
 the browser.
@@ -292,12 +292,12 @@ than guessed at.
 
 ### What gets skipped
 
-| Situation | Behaviour |
-| --------- | --------- |
-| Filename does not match the pattern | Skipped, reported to stderr |
-| ID unknown to the API (deleted, private, region-blocked, typo) | Skipped, reported to stderr |
-| API error for a whole batch (`quotaExceeded`, invalid key) | Every video in that batch skipped, with the API message |
-| Timeout or network failure | Skipped, reported to stderr |
+| Situation                                                      | Behaviour                                               |
+| -------------------------------------------------------------- | ------------------------------------------------------- |
+| Filename does not match the pattern                            | Skipped, reported to stderr                             |
+| ID unknown to the API (deleted, private, region-blocked, typo) | Skipped, reported to stderr                             |
+| API error for a whole batch (`quotaExceeded`, invalid key)     | Every video in that batch skipped, with the API message |
+| Timeout or network failure                                     | Skipped, reported to stderr                             |
 
 Nothing is ever rendered as a placeholder or a broken card — a video is in both
 outputs or in neither.
@@ -305,10 +305,11 @@ outputs or in neither.
 ## Development
 
 ```sh
-bun test           # 36 unit tests
-bun run test:dom   # 21 DOM assertions against a real generated page (jsdom)
-bunx tsc --noEmit  # typecheck
-bun run build:css  # rebuild src/theme.css → src/theme.generated.css
+bun test            # 49 unit tests
+bun run test:dom    # 21 DOM assertions against a real generated page (jsdom)
+bun check           # typecheck (multithreaded, same errors as tsc)
+bun fmt --check     # formatting gate; `bun fmt` writes
+bun run build:css   # rebuild src/theme.css → src/theme.generated.css
 ```
 
 The DOM suite drives an actual catalog page: it checks that cards render, that

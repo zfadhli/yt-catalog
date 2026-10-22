@@ -14,7 +14,11 @@ const file = (id: string): ParsedFile => ({
 
 const apiItem = (id: string, thumbnails: unknown = thumbs()) => ({
   id,
-  snippet: { title: "Official Title", channelTitle: "Official Channel", thumbnails },
+  snippet: {
+    title: "Official Title",
+    channelTitle: "Official Channel",
+    thumbnails,
+  },
 });
 
 const thumbs = (overrides: Record<string, unknown> = {}) => ({
@@ -78,12 +82,20 @@ describe("toEntry", () => {
   });
 
   test("falls back to filename metadata when snippet fields are absent", () => {
-    const entry = toEntry({ id: "AAAAAAAAAAA", snippet: { thumbnails: thumbs() } }, file("AAAAAAAAAAA"));
-    expect(entry).toMatchObject({ title: "File Title", channel: "FileChannel" });
+    const entry = toEntry(
+      { id: "AAAAAAAAAAA", snippet: { thumbnails: thumbs() } },
+      file("AAAAAAAAAAA"),
+    );
+    expect(entry).toMatchObject({
+      title: "File Title",
+      channel: "FileChannel",
+    });
   });
 
   test("is null without a usable thumbnail", () => {
-    expect(toEntry({ id: "AAAAAAAAAAA", snippet: {} }, file("AAAAAAAAAAA"))).toBeNull();
+    expect(
+      toEntry({ id: "AAAAAAAAAAA", snippet: {} }, file("AAAAAAAAAAA")),
+    ).toBeNull();
   });
 });
 
@@ -199,5 +211,7 @@ describe("resolveVideos", () => {
 
 /** Distinct 11-char ids for fixtures. */
 function id(n: number): string {
-  return `AAAAAAAAA${String(n).padStart(2, "0").slice(-2)}`.padEnd(11, "A").slice(0, 11);
+  return `AAAAAAAAA${String(n).padStart(2, "0").slice(-2)}`
+    .padEnd(11, "A")
+    .slice(0, 11);
 }

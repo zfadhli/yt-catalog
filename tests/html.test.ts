@@ -1,9 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import {
-  escapeHtml,
-  renderHtml,
-  serializeForHtml,
-} from "../src/html.ts";
+import { escapeHtml, renderHtml, serializeForHtml } from "../src/html.ts";
 import type { VideoEntry } from "../src/types.ts";
 
 const videos: VideoEntry[] = [
@@ -73,12 +69,14 @@ describe("html renderer", () => {
     expect(html).toContain('x-data="catalog"');
     expect(html).toContain('x-for="v in visible"');
     expect(html).toContain('x-text="v.title"');
-    expect(html).toContain('x-cloak');
+    expect(html).toContain("x-cloak");
   });
 
   test("dark mode uses Oxbow's .dark class; light/dark only (no system)", () => {
     const html = renderHtml(videos);
-    const init = html.match(/<script>\(function\(\)\{try\{[\s\S]*?<\/script>/)![0];
+    const init = html.match(
+      /<script>\(function\(\)\{try\{[\s\S]*?<\/script>/,
+    )![0];
     expect(init).toContain('classList.add("dark")');
     expect(init).not.toContain("prefers-color-scheme");
     // No system mode anywhere in the page.

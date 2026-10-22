@@ -2,7 +2,12 @@ import { describe, expect, test } from "bun:test";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { legacyHint, listCatalogs, timestamp, withTimestamp } from "../src/cli.ts";
+import {
+  legacyHint,
+  listCatalogs,
+  timestamp,
+  withTimestamp,
+} from "../src/cli.ts";
 
 const STAMP = "20260921_163400";
 

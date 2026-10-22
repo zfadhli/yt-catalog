@@ -132,8 +132,9 @@ export async function resolveVideos(
   }
 
   await Promise.all(
-    Array.from({ length: Math.min(concurrency, Math.max(batches.length, 1)) }, () =>
-      worker(),
+    Array.from(
+      { length: Math.min(concurrency, Math.max(batches.length, 1)) },
+      () => worker(),
     ),
   );
 
@@ -146,9 +147,10 @@ export async function resolveVideos(
       const entry = found?.get(file.id);
       if (entry) videos.push(entry);
       else {
-        const reason = entry === undefined && found && !batchError
-          ? `video unavailable (deleted, private, or region-blocked)`
-          : (batchError ?? "video unavailable");
+        const reason =
+          entry === undefined && found && !batchError
+            ? `video unavailable (deleted, private, or region-blocked)`
+            : (batchError ?? "video unavailable");
         skipped.push({
           file,
           reason: `Data API: ${reason} for id "${file.id}"`,
@@ -208,7 +210,8 @@ async function fetchBatch(
 
 function chunk<T>(items: T[], size: number): T[][] {
   const out: T[][] = [];
-  for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size));
+  for (let i = 0; i < items.length; i += size)
+    out.push(items.slice(i, i + size));
   return out;
 }
 

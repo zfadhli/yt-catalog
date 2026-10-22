@@ -36,7 +36,9 @@ describe("mergeVideos", () => {
   });
 
   test("drops duplicates within one catalog", () => {
-    expect(mergeVideos([[video("aaaaaaaaaaa"), video("aaaaaaaaaaa")]])).toHaveLength(1);
+    expect(
+      mergeVideos([[video("aaaaaaaaaaa"), video("aaaaaaaaaaa")]]),
+    ).toHaveLength(1);
   });
 
   test("handles empty input", () => {
@@ -59,7 +61,7 @@ describe("parseCatalog", () => {
 
   test("rejects a non-array payload", () => {
     expect(() => parseCatalog('{"videos":[]}', "videos_1.json")).toThrow(
-      'expected a JSON array of videos',
+      "expected a JSON array of videos",
     );
   });
 
