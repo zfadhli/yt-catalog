@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { escapeHtml, renderHtml, serializeForHtml } from "../src/html.ts";
+import { renderHtml, serializeForHtml } from "../src/html.ts";
 import type { VideoEntry } from "../src/types.ts";
 
 const videos: VideoEntry[] = [
@@ -145,11 +145,5 @@ describe("html renderer", () => {
     const style = html.match(/<style>([\s\S]*?)<\/style>/)![1];
     // The minifier merges selectors, so match the declaration, not the rule.
     expect(style).toMatch(/\[x-cloak\][^{}]*\{[^}]*display\s*:\s*none/);
-  });
-
-  test("escapeHtml covers content and attribute contexts", () => {
-    expect(escapeHtml(`<a href="x">'&'`)).toBe(
-      "&lt;a href=&quot;x&quot;&gt;&#39;&amp;&#39;",
-    );
   });
 });

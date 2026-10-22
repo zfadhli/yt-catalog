@@ -2,16 +2,6 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import type { VideoEntry } from "./types.js";
 
-/** Escape text for safe interpolation into HTML content or attributes. */
-export function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
-
 /**
  * Serialize the catalog payload for embedding in a `<script
  * type="application/json">` tag. `<` is unicode-escaped so a title
