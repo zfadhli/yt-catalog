@@ -11,22 +11,26 @@ browsable record of what they were.
 Pipeline, in order:
 
 ```
-src/         7 TypeScript files
-  cli.ts     `scan` command: scan → parse filenames → resolve via API → write HTML + JSON
-             `merge` command: videos*.json → deduped HTML + JSON, no API
-  scanner.ts flat or recursive file listing
-  parser.ts  filename → { channel, id, title }
-  api.ts     batched videos.list calls, bounded concurrency, skip classification
-  html.ts    renders the single-file page (Tailwind + Alpine, both inlined)
-  merge.ts   catalog JSON → deduped VideoEntry[]; validates input shape
-  types.ts   shared types + API URL helpers
-  theme.css  Tailwind v4 source → theme.generated.css
-tests/       6 bun:test files, mirroring src/ module names
-scripts/     dom-check.mjs (jsdom DOM assertions; run under node)
-vendor/      alpine.min.js (committed, inlined at render time)
+src/
+  cli.ts        entry point: registers `scan` + `merge`, legacy-command hint
+  commands/
+    scan.ts     scan flags + run: scan → parse filenames → resolve via API → write
+    merge.ts    merge flags + run, catalog discovery (videos*.json → videos)
+  scanner.ts    flat or recursive file listing
+  parser.ts     filename → { channel, id, title }
+  api.ts        batched videos.list calls, bounded concurrency, skip classification
+  html.ts       renders the single-file page (Tailwind + Alpine, both inlined)
+  catalog.ts    catalog JSON → deduped VideoEntry[]; validation; writes both outputs
+  config.ts     API-key discovery (env, .env, ~/.yt-catalog.env)
+  paths.ts      timestamp and output-path stamping
+  types.ts      shared types only
+  theme.css     Tailwind v4 source → theme.generated.css
+tests/          7 bun:test files, mirroring src/ module names, plus cli-e2e
+scripts/        dom-check.mjs (jsdom DOM assertions; run under node)
+vendor/         alpine.min.js (committed, inlined at render time)
 ```
 
-Roughly 1 400 lines of TypeScript across 7 source files and 6 test files, plus
+Roughly 1 700 lines of TypeScript across 11 source files and 7 test files, plus
 a 150-line DOM test script and the Tailwind source. One runtime dependency
 (`citty`). No frameworks, no database, no server.
 
@@ -88,6 +92,8 @@ cases.
 Testing conventions:
 
 - Tests live in `tests/`, named `<module>.test.ts` after the module under test.
+  `tests/cli-e2e.test.ts` is the exception: it spawns the real CLI and pins
+  stdout/stderr/exit codes plus the written files.
 - Tests import source with **`.ts`** extensions (`from "../src/api.ts"`), while
   `src/`'s own internal imports use **`.js`** extensions (`from "./api.js"`).
   This is deliberate — `tsconfig.json` sets `allowImportingTsExtensions`. Keep
@@ -176,7 +182,10 @@ Alpine-specific traps that have already caused bugs here:
 ## Architecture notes
 
 - `cli.ts` is the only module with side effects. Guard the entry point with
-  `if (import.meta.main) runMain(main)` so tests can import it.
+  `if (import.meta.main) runMain(main)` so tests can import it. Commands live
+  under `src/commands/`; both write outputs through `writeCatalog` in
+  `src/catalog.ts`, which owns the `--html`/`--json` collision guard. Do not
+  write the two files anywhere else.
 - Exit codes: `0` on success **even when files were skipped** (check stderr),
   `1` for a missing/unreadable folder or a missing API key.
 - Human-readable output goes to `stdout` (one summary line); errors, warnings,
@@ -238,8 +247,8 @@ Alpine-specific traps that have already caused bugs here:
 
 Add a CLI flag:
 
-1. Add it to the `args` object in the `scanCommand` (or `mergeCommand`) in
-   `src/cli.ts` (with `default` and `description`).
+1. Add it to the `args` object in `src/commands/scan.ts` (or `merge.ts`) with
+   `default` and `description`.
 2. Wire it in `run()`, extracting any pure logic into an exported helper.
 3. Unit-test the helper in `tests/cli.test.ts`.
 4. Document it in `README.md` (options table) and here if relevant.

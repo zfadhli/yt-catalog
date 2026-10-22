@@ -1,6 +1,11 @@
 import { describe, expect, test } from "bun:test";
-import { pickThumbnail, resolveVideos, toEntry } from "../src/api.ts";
-import { API_BATCH_SIZE, videosApiUrl } from "../src/types.ts";
+import {
+  API_BATCH_SIZE,
+  pickThumbnail,
+  resolveVideos,
+  toEntry,
+  videosApiUrl,
+} from "../src/api.ts";
 import type { ParsedFile } from "../src/types.ts";
 
 const KEY = "test-key";

@@ -1,3 +1,4 @@
+import { renderHtml } from "./html.js";
 import type { VideoEntry } from "./types.js";
 
 /**
@@ -40,4 +41,17 @@ export function parseCatalog(text: string, file: string): VideoEntry[] {
     }
   }
   return data as VideoEntry[];
+}
+
+export async function writeCatalog(
+  videos: VideoEntry[],
+  htmlPath: string,
+  jsonPath: string,
+): Promise<void> {
+  if (htmlPath === jsonPath) {
+    console.error("error: --html and --json must differ");
+    process.exit(1);
+  }
+  await Bun.write(htmlPath, renderHtml(videos));
+  await Bun.write(jsonPath, JSON.stringify(videos, null, 2) + "\n");
 }

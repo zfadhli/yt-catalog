@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { mergeVideos, parseCatalog } from "../src/merge.ts";
+import { mergeVideos, parseCatalog } from "../src/catalog.ts";
 import type { VideoEntry } from "../src/types.ts";
 
 function video(id: string, title = `title ${id}`): VideoEntry {
