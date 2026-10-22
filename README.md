@@ -272,7 +272,8 @@ cli.ts        scan folder → parse filenames → resolve via API → write HTML
 scanner.ts    flat or recursive file listing
 parser.ts     filename → { channel, id, title }
 api.ts        batched videos.list calls, bounded concurrency, skip classification
-html.ts       renders the self-contained page
+html.ts       renders the self-contained page (compiles page.hbs via tempura)
+page.hbs      page markup, scanned by Tailwind for class names
 theme.css     Tailwind v4 source (Oxbow tokens), built into theme.generated.css
 ```
 
@@ -305,7 +306,7 @@ outputs or in neither.
 ## Development
 
 ```sh
-bun test            # 49 unit tests
+bun test            # 54 unit tests
 bun run test:dom    # 21 DOM assertions against a real generated page (jsdom)
 bun check           # typecheck (multithreaded, same errors as tsc)
 bun fmt --check     # formatting gate; `bun fmt` writes
@@ -320,10 +321,11 @@ running after any markup change.
 
 > [!NOTE]
 > `build:css` is only needed after editing `src/theme.css` or the markup inside
-> `src/html.ts`, because Tailwind scans that file for class names.
+> `src/page.hbs`, because Tailwind scans that file for class names.
 > `src/theme.generated.css` and `vendor/alpine.min.js` are committed so the CLI
 > runs with no build step.
 
-Only one runtime dependency — [`citty`](https://github.com/unjs/citty). HTTP and
-filesystem access use built-in Bun/Node APIs; Tailwind and jsdom are
+Two runtime dependencies — [`citty`](https://github.com/unjs/citty) for the CLI
+and [`tempura`](https://github.com/lukeed/tempura) for the page template. HTTP
+and filesystem access use built-in Bun/Node APIs; Tailwind and jsdom are
 development-only.

@@ -16,10 +16,12 @@ src/
   commands/
     scan.ts     scan flags + run: scan → parse filenames → resolve via API → write
     merge.ts    merge flags + run, catalog discovery (videos*.json → videos)
+    folder.ts   assertFolder: shared missing/not-a-directory guard
   scanner.ts    flat or recursive file listing
   parser.ts     filename → { channel, id, title }
   api.ts        batched videos.list calls, bounded concurrency, skip classification
-  html.ts       renders the single-file page (Tailwind + Alpine, both inlined)
+  html.ts       renders page.hbs through tempura; inlines Tailwind + Alpine
+  page.hbs      the page markup (tempura template, scanned by Tailwind)
   catalog.ts    catalog JSON → deduped VideoEntry[]; validation; writes both outputs
   config.ts     API-key discovery (env, .env, ~/.yt-catalog.env)
   paths.ts      timestamp and output-path stamping
@@ -30,9 +32,9 @@ scripts/        dom-check.mjs (jsdom DOM assertions; run under node)
 vendor/         alpine.min.js (committed, inlined at render time)
 ```
 
-Roughly 1 700 lines of TypeScript across 11 source files and 7 test files, plus
-a 150-line DOM test script and the Tailwind source. One runtime dependency
-(`citty`). No frameworks, no database, no server.
+Roughly 1 700 lines of TypeScript across 12 source files and 7 test files, plus
+a 150-line DOM test script, the Tailwind source, and `page.hbs`. Two runtime
+dependencies (`citty`, `tempura`). No frameworks, no database, no server.
 
 Key constraint to preserve: **the CLI never deletes or modifies user files.** It
 only reads filenames and writes the two catalog files. Do not add code that
@@ -66,7 +68,7 @@ on a key being present.
 ## Testing instructions
 
 ```sh
-bun test           # 49 unit tests (bun:test), all of tests/
+bun test           # 54 unit tests (bun:test), all of tests/
 bun run test:dom   # 21 DOM assertions against a generated page
 bun check          # typecheck (TypeScript, multithreaded; same errors as tsc)
 bun fmt --check    # formatting; `bun fmt` writes
@@ -122,7 +124,8 @@ Testing conventions:
   generated or vendored, so formatting them only adds churn.
 - Prefer built-in Bun/Node APIs (`Bun.write`, `Bun.file`, `node:fs/promises`,
   native `fetch`) over adding dependencies. Adding a runtime dependency needs a
-  strong justification — there is currently exactly one.
+  strong justification — the runtime deps are `citty` (CLI) and `tempura`
+  (page template), both small and dependency-free.
 - Export pure functions and keep side effects in `cli.ts`. `parser.ts`,
   `scanner.ts`, and the helpers in `api.ts`/`html.ts` are all unit-testable
   without I/O or network.
@@ -135,13 +138,17 @@ Testing conventions:
 The generated page inlines Tailwind CSS v4 and Alpine.js 3 so it stays a single
 file with no CDN, server, or build step at runtime. Two consequences:
 
+- Markup lives in `src/page.hbs`, a tempura template compiled once at module
+  load and fed `{ count, themeInit, css, payload, appJs, alpineJs }`. Interpolated
+  HTML must use triple braces (`{{{ css }}}`), because `{{ x }}` escapes.
 - `src/html.ts` calls `assets()` at render time, which **synchronously reads**
   `src/theme.generated.css` and `vendor/alpine.min.js`. If either is missing,
   rendering throws `ENOENT`. Both are committed so the CLI runs without a build.
-- Tailwind scans `src/html.ts` (via `@source "./html.ts"` in `src/theme.css`) for
-  class names. **After editing markup or classes in `html.ts`, run
+- Tailwind scans `src/page.hbs` (via `@source "./page.hbs"` in `src/theme.css`)
+  for class names. **After editing markup or classes in `page.hbs`, run
   `bun run build:css` and commit the regenerated CSS**, or the new utilities are
-  absent from the output. Editing `theme.css` requires the same rebuild.
+  absent from the output. Editing `theme.css` requires the same rebuild. A
+  class name assembled at runtime is invisible to Tailwind — keep them literal.
 
 Alpine-specific traps that have already caused bugs here:
 
@@ -221,7 +228,7 @@ Alpine-specific traps that have already caused bugs here:
   bun test && bun run test:dom && bun check && bun fmt --check
   ```
   There is no CI workflow configured, so these will not be run for you.
-- If you changed markup or classes in `html.ts` or anything in `theme.css`, also
+- If you changed markup or classes in `page.hbs` or anything in `theme.css`, also
   run `bun run build:css` and include the regenerated
   `src/theme.generated.css` in the same commit. Committing markup without the
   rebuilt CSS ships the bug rather than fixing it.
@@ -255,7 +262,7 @@ Add a CLI flag:
 
 Change the page layout:
 
-1. Edit the markup or Alpine component in `src/html.ts`.
+1. Edit the markup in `src/page.hbs`; the Alpine component stays in `src/html.ts`.
 2. `bun run build:css`.
 3. `bun test && bun run test:dom && bun check && bun fmt --check`.
 4. Update `tests/html.test.ts` if you added or removed a UI control, and

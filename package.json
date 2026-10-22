@@ -16,7 +16,8 @@
     "format:check": "bun fmt --check"
   },
   "dependencies": {
-    "citty": "^0.1.6"
+    "citty": "^0.1.6",
+    "tempura": "^1.0.0"
   },
   "devDependencies": {
     "@tailwindcss/cli": "^4",

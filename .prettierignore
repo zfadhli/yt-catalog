@@ -3,3 +3,7 @@ src/theme.generated.css
 
 # Vendored third-party bundle, inlined verbatim.
 vendor/
+
+# Handlebars-style template: Prettier cannot parse tempura syntax, and
+# reformatting markup would change the rendered page.
+src/page.hbs
